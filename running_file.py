@@ -1,8 +1,5 @@
 print(input())
 print(input())
-print("something")
-# raise Exception
-
-
-
-
+print(input())
+print(input())
+print(input())

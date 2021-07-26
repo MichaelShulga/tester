@@ -2,11 +2,6 @@ import timeit
 from subprocess import Popen, PIPE
 
 
-def rb_file(path):
-    with open(path, "rb") as f:
-        return f.read()
-
-
 SC = 1  # successfully completed
 WA = 2  # wrong answer
 RE = 3  # runtime error
@@ -15,14 +10,14 @@ TL = 4  # time limit
 
 def different_length_message(correct, user):
     return f"Different length\n" \
-           f"Correct: {correct}\n" \
-           f"Your: {user}"
+           f"\tCorrect: {correct}\n" \
+           f"\tYour: {user}"
 
 
 def different_lines_message(correct, user, index):
     return f'Difference in lines {index}\n' \
-           f'Correct: "{correct}"\n' \
-           f'Your: "{user}"'
+           f'\tCorrect: "{correct}"\n' \
+           f'\tYour: "{user}"'
 
 
 def time_limit_message(limit_time):
@@ -41,9 +36,10 @@ class ScriptTester:
             execute_time = timeit.default_timer() - start
         return stdout, stderr, execute_time
 
-    def test(self, stdin: bytes, answer_path) -> (int, float, str):  # verdict, execute_time, details
+    def test(self, stdin: bytes, answer: bytes) -> (int, float, str):  # verdict, execute_time, details
         stdout, stderr, execute_time = self.execute(stdin)
 
+        print(stdout)
         output = stdout.decode()
         errors = stderr.decode()
 
@@ -51,7 +47,7 @@ class ScriptTester:
         if errors:
             return RE, execute_time, errors
 
-        answer = rb_file(answer_path).decode().split('\n')
+        answer = answer.decode().split('\n')
         user = output.split('\n')
 
         #  different length

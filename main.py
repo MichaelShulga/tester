@@ -1,14 +1,19 @@
-import subprocess
+from tester import ScriptTester, get_input
 
-
-LANG = "python"
-FILE = "running_file.py"
-TEST = "archive_9-11\\5"
+CMD = "python running_file.py"
+TEST = "archive_9-11\\5\\tests\\01"
 
 
 def main():
-    task = subprocess.Popen([LANG, FILE], stdin=subprocess.PIPE)
-    task.communicate(b'test2')
+    tester = ScriptTester(CMD)
+
+    stdout, stderr = tester.execute(get_input("input.txt"))
+    print(stdout)
+    print(stderr)
+
+    stdout, stderr = tester.execute(get_input("input.txt"))
+    print(stdout)
+    print(stderr)
 
 
 if __name__ == '__main__':

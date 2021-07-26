@@ -2,14 +2,9 @@ import timeit
 from subprocess import Popen, PIPE
 
 
-def get_input(path):
+def rb_file(path):
     with open(path, "rb") as f:
         return f.read()
-
-
-def get_answer(path):
-    with open(path, "rb") as f:
-        return f.readlines()
 
 
 SC = 1  # successfully completed
@@ -30,37 +25,50 @@ def different_lines_message(correct, user, index):
            f'Your: "{user}"'
 
 
+def time_limit_message(limit_time):
+    return f'Time limit: {limit_time}'
+
+
 class ScriptTester:
-    def __init__(self, cmd, time_limit=1, memory_limit=512, details=True):
+    def __init__(self, cmd, time_limit=1):
         self.cmd = cmd
         self.time_limit = time_limit
-        self.memory_limit = memory_limit
-        self.details = details
 
-    def execute(self, stdin):
+    def execute(self, stdin) -> (str, str, float):
         with Popen(self.cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE) as proc:
-            proc.stdin.write(stdin)
-            proc.stdin.close()
-            return proc.stdout.readlines(), proc.stderr.read().decode()
+            start = timeit.default_timer()
+            stdout, stderr = proc.communicate(stdin)
+            execute_time = timeit.default_timer() - start
+        return stdout, stderr, execute_time
 
-    def test(self, input_path, answer_path) -> (int, float, str):  # verdict, execute_time, details
-        start = timeit.default_timer()
-        stdout, stderr = self.execute(get_input(input_path))
-        execute_time = timeit.default_timer() - start
+    def test(self, stdin: bytes, answer_path) -> (int, float, str):  # verdict, execute_time, details
+        stdout, stderr, execute_time = self.execute(stdin)
+
+        output = stdout.decode()
+        errors = stderr.decode()
 
         # runtime error
-        if stderr:
-            return RE, execute_time, stderr
+        if errors:
+            return RE, execute_time, errors
 
-        answer = get_answer(answer_path)
+        answer = rb_file(answer_path).decode().split('\n')
+        user = output.split('\n')
 
         #  different length
         answer_length = len(answer)
-        stdout_length = len(stdout)
-        if stdout_length != stdout_length:
-            return WA, execute_time, different_length_message(answer_length, stdout_length)
+        user_length = len(user)
+        if answer_length != user_length:
+            return WA, execute_time, different_length_message(answer_length, user_length)
 
-        for index, variants in enumerate(zip(stdout, answer)):
-            user, correct = map(bytes.strip, variants)
-            if user != correct:
-                return WA, execute_time, different_lines_message(correct, user, index)
+        #  different lines
+        for index, lines in enumerate(zip(answer, user)):
+            answer_line, user_line = lines
+            if answer_line != user_line:
+                return WA, execute_time, different_lines_message(answer_line, user_line, index)
+
+        # time limit
+        if execute_time > self.time_limit:
+            return TL, execute_time, time_limit_message(self.time_limit)
+
+        #  all is correct
+        return SC, execute_time, ''

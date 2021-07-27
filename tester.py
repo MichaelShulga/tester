@@ -8,10 +8,10 @@ RE = 3  # runtime error
 TL = 4  # time limit
 
 
-def different_length_message(correct, user):
+def different_length_message(answer, user):
     return f"Different length\n" \
-           f"\tCorrect: {correct}\n" \
-           f"\tYour: {user}"
+           f"\tCorrect: {len(answer)}{answer}\n" \
+           f"\tYour: {len(user)}{user}"
 
 
 def different_lines_message(correct, user, index):
@@ -29,32 +29,26 @@ class ScriptTester:
         self.cmd = cmd
         self.time_limit = time_limit
 
-    def execute(self, stdin) -> (str, str, float):
+    def execute(self, stdin) -> (bytes, bytes, float):
         with Popen(self.cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE) as proc:
             start = timeit.default_timer()
-            stdout, stderr = proc.communicate(stdin)
+            stdout, stderr = proc.communicate(stdin, timeout=1)
             execute_time = timeit.default_timer() - start
         return stdout, stderr, execute_time
 
     def test(self, stdin: bytes, answer: bytes) -> (int, float, str):  # verdict, execute_time, details
         stdout, stderr, execute_time = self.execute(stdin)
 
-        print(stdout)
-        output = stdout.decode()
-        errors = stderr.decode()
-
         # runtime error
-        if errors:
-            return RE, execute_time, errors
+        if stderr:
+            return RE, execute_time, stderr.decode()
 
-        answer = answer.decode().split('\n')
-        user = output.split('\n')
+        answer = answer.decode().splitlines()
+        user = stdout.decode().splitlines()
 
         #  different length
-        answer_length = len(answer)
-        user_length = len(user)
-        if answer_length != user_length:
-            return WA, execute_time, different_length_message(answer_length, user_length)
+        if len(answer) != len(user):
+            return WA, execute_time, different_length_message(answer, user)
 
         #  different lines
         for index, lines in enumerate(zip(answer, user)):

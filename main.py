@@ -1,29 +1,40 @@
 import os
 
-from tester import ScriptTester
+from tester import ScriptTester, SC, WA, RE, TL
 
-CMD = "python running_file.py"
+CMD = "python 5.py"
 TESTS = "archive_9-11\\5\\tests"
+
+DETAILS = False
 
 
 def main():
     tester = ScriptTester(CMD)
+    verdicts = {
+        SC: "SC",
+        WA: 'WA',
+        RE: 'RE',
+        TL: 'TL'
+    }
 
+    result = []
     for filename in os.listdir(TESTS):
-        if filename.endswith(".a"):
-            print(os.path.join(TESTS, filename))
+        if '.' not in filename:  # no extension file matches input data
+            with open(os.path.join(TESTS, filename), "rb") as f:
+                stdin = f.read()
+            with open(os.path.join(TESTS, filename + ".a"), "rb") as f:
+                answer = f.read()
 
-    with open("answer.txt", "rb") as f1:
-        answer = f1.read()
+            verdict, execute_time, details = tester.test(stdin, answer)
+            print('- ' * 7)
+            print(verdicts[verdict], '\t', f'{round(execute_time * 100)}ms')
+            print('- ' * 7)
 
-    with open("input.txt", "rb") as f1:
-        stdin = f1.read()
+            result.append(verdict)
 
-    verdict, execute_time, details = tester.test(stdin, answer)
-    print(verdict)
-    print(execute_time)
-    print(details)
-
+    print()
+    completed = result.count(SC) / len(result)
+    print(f'{completed * 100}% completed successfully')
 
 if __name__ == '__main__':
     main()
